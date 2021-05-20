@@ -32,7 +32,7 @@ Two files will be produced
 * theskybox_cubemap.vtf
 * theskybox_cubemap.vmt
 
-Move these files to **materials/cubemaps_skyboxes** or edit **theskybox_cubemap.vmt** to use a different path.
+Move these files to **materials/cubemap_skyboxes** or edit **theskybox_cubemap.vmt** to use a different path.
 
 Now you can create a **func_brush** with this texture around your **sky_camera** and toggle it on and off whenever you want.
 
