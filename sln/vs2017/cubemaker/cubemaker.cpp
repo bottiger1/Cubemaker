@@ -12,7 +12,7 @@ you can hide and show at any time.
 
 Drag one of the files ending in ft,bk,rt,lf,up,dn onto the program. 
 
-All 6 of these VTF files must be in the same directory.Sometimes the dn VTF is missing. Open the VMT 
+All 6 of these VTF files must be in the same directory. Sometimes the dn VTF is missing. Open the VMT 
 file with the same name, find the VTF it points to, copy and paste it into the same folder as the VMT 
 and give it the same name except with the extension VTF.
 
