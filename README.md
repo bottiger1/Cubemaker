@@ -49,3 +49,9 @@ https://developer.nvidia.com/legacy-texture-tools
 ## Credits
 
 The program was written by Bottiger @ skial.com. Thanks to Berke for discovering the method. Thanks to VTFLib for creating the library.
+
+## Licenses
+
+The cubemaker program is licensed as BSD. VTFLib is LGPL. VTFCmd and VTFEdit are GPL. 
+
+The cubemaker program does not rely on VTFCmd or VTFEdit, they are just included in the repository as they are bundled with VTFLib.
