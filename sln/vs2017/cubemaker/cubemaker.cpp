@@ -24,7 +24,7 @@ theskybox_cubemap.vmt to that path.
 You can now apply theskybox_cubemap to the faces around the sky_camera.
 )";
 
-const char* g_completed = R"(
+const char* g_completed = R"(DONE
 Edit the envmap path in %s_cubemap.vmt to your liking and copy the files ending in _cubemap there.
 Default path is materials/cubemap_skyboxes/
 )";

@@ -10,6 +10,8 @@ This is used to allow the changing of skyboxes whenever you want.
 
 Download the release and put the exe and dll file in a folder somewhere.
 
+https://github.com/bottiger1/Cubemaker/releases/
+
 Locate the VTF files of the skybox. For example if the name of the skybox is **theskybox** there will be a folder with these files
 
 * **theskybox_ft.vtf** 
