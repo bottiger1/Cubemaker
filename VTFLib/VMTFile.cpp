@@ -58,22 +58,26 @@ vlBool CVMTFile::IsLoaded() const
 
 vlBool CVMTFile::Load(const vlChar *cFileName)
 {
-	return this->Load(&IO::Readers::CFileReader(cFileName));
+	auto r = IO::Readers::CFileReader(cFileName);
+	return this->Load(&r);
 }
 
 vlBool CVMTFile::Load(const vlVoid *lpData, vlUInt uiBufferSize)
 {
-	return this->Load(&IO::Readers::CMemoryReader(lpData, uiBufferSize));
+	auto r = IO::Readers::CMemoryReader(lpData, uiBufferSize);
+	return this->Load(&r);
 }
 
 vlBool CVMTFile::Load(vlVoid *pUserData)
 {
-	return this->Load(&IO::Readers::CProcReader(pUserData));
+	auto r = IO::Readers::CProcReader(pUserData);
+	return this->Load(&r);
 }
 
 vlBool CVMTFile::Save(const vlChar *cFileName) const
 {
-	return this->Save(&IO::Writers::CFileWriter(cFileName));
+	auto r = IO::Writers::CFileWriter(cFileName);
+	return this->Save(&r);
 }
 
 vlBool CVMTFile::Save(vlVoid *lpData, vlUInt uiBufferSize, vlUInt &uiSize) const
@@ -91,7 +95,8 @@ vlBool CVMTFile::Save(vlVoid *lpData, vlUInt uiBufferSize, vlUInt &uiSize) const
 
 vlBool CVMTFile::Save(vlVoid *pUserData) const
 {
-	return this->Save(&IO::Writers::CProcWriter(pUserData));
+	auto r = IO::Writers::CProcWriter(pUserData);
+	return this->Save(&r);
 }
 
 enum EToken
