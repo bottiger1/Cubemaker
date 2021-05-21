@@ -33,7 +33,6 @@ const char* g_vmt_template = \
 R"("WindowImposter"
 {
     "$envmap" "cubemap_skyboxes/%s_cubemap"
-    "$nofog"  1
 })";
 
 int EndsWith(const char* str, const char* suffix)
