@@ -143,11 +143,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cubemaker.cpp" />
+    <ClCompile Include="half.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VTFLib\VTFLib.vcxproj">
       <Project>{85ecfc39-0719-47b3-a90e-961e0f1750ca}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="half.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

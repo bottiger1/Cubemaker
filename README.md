@@ -31,10 +31,15 @@ Two files will be produced
 
 * theskybox_cubemap.vtf
 * theskybox_cubemap.vmt
+* theskybox_cubemap.hdr.vmt
 
 Move these files to **materials/cubemap_skyboxes** or edit **theskybox_cubemap.vmt** to use a different path.
 
 Now you can create a **func_brush** with this texture around your **sky_camera** and toggle it on and off whenever you want.
+
+You can remove the hdr.vmt file if you are compiling in LDR only. Otherwise if you compile in HDR, anyone using full HDR will
+see a blinding white light instead. The HDR file is large, but you can get compression ratios of 10x or more when the bsp is
+compressed by repacking or bz2.
 
 ## How to compile
 
@@ -54,6 +59,6 @@ The program was written by Bottiger @ skial.com. Thanks to Berke for discovering
 
 ## Licenses
 
-The cubemaker program is licensed as BSD. VTFLib is LGPL. VTFCmd and VTFEdit are GPL. 
+The cubemaker program is licensed as BSD. VTFLib is LGPL. VTFCmd and VTFEdit are GPL. half.h/half.cpp is licensed as BSD by another author.
 
 The cubemaker program does not rely on VTFCmd or VTFEdit, they are just included in the repository as they are bundled with VTFLib.

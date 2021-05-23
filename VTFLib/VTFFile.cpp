@@ -3538,7 +3538,7 @@ vlSingle sHDRLogAverageLuminance;
 
 vlVoid ToFP16(vlUInt16& R, vlUInt16& G, vlUInt16& B, vlUInt16& A)
 {
-	
+
 }
 
 vlSingle ClampFP16(vlSingle sValue)
