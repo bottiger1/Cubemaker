@@ -194,6 +194,9 @@ int main(int argc, char* argv[])
 
     VTFLib::CVTFFile* faces[6]{};
 
+    int width = 0;
+    int height = 0;
+
     for (int i = 0; i < 6; i++)
     {
         char name[256];
@@ -205,13 +208,24 @@ int main(int argc, char* argv[])
             PressKeyToContinue();
             std::terminate();
         }
+        auto fWidth = faces[i]->GetWidth();
+        auto fHeight = faces[i]->GetHeight();
+        if (fWidth == fHeight && fWidth > width)
+        {
+            width = fWidth;
+            height = fHeight;
+        }
     }
 
-    auto cubemap = VTFLib::CVTFFile();
-    auto width  = faces[0]->GetWidth();
-    auto height = faces[0]->GetHeight();
+    if (width == 0)
+    {
+        printf("Failed to find a VTF with same width and height\n");
+        PressKeyToContinue();
+        std::terminate();
+    }
 
-    printf("assuming dimensions of %i x %i based on %sft.vtf \n", width, height, base_nopath);
+    printf("assuming dimensions of %i x %i based on largest square VTF \n", width, height);
+    auto cubemap = VTFLib::CVTFFile();
 
     vlByte* main_buffer[6];
     for (int i = 0; i < 6; i++)
