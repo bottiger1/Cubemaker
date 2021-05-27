@@ -194,8 +194,8 @@ int main(int argc, char* argv[])
 
     VTFLib::CVTFFile* faces[6]{};
 
-    int width = 0;
-    int height = 0;
+    vlUInt width = 0;
+    vlUInt height = 0;
 
     for (int i = 0; i < 6; i++)
     {
@@ -244,25 +244,50 @@ int main(int argc, char* argv[])
         if (face_width != width || face_height != height)
         {
             printf("%s%s.vtf has a different dimension %i x %i. attempting to resize.\n", base_nopath, g_faceorder[i], face_width, face_height);
-            vlByte* resized = (vlByte*)malloc(4 * height * width);
-            VTFMipmapFilter filter;
-            if (face_width * face_height < width * height)
+            // try to enlarge side faces without stretching them. 
+            // This seems to be the correct method for rectangular sideways skyboxes
+            // take the last pixel and fill out the buffer with it
+            bool skip_resize = false;
+            if (i >= 0 && i <= 3 && face_width > face_height)
             {
-                filter = VTFMipmapFilter::MIPMAP_FILTER_BLACKMAN;
+                printf("padding rectangular side face\n");
+                vlByte* resized = (vlByte*)malloc(4 * face_width * face_width);
+                memcpy(resized, main_buffer[i], 4 * face_width * face_height);
+                vlUInt* resizedPixelPtr = (vlUInt*)resized;
+                vlUInt32 lastPixel = resizedPixelPtr[face_width * face_height - 1];
+                for (vlUInt i = face_width * face_height; i < face_width * face_width; i++)
+                {
+                    resizedPixelPtr[i] = lastPixel;
+                }
+                free(main_buffer[i]);
+                main_buffer[i] = resized;
+                face_height = face_width;
+                // check if we still need to stretch it out
+                skip_resize = face_height == height && face_width == width;
             }
-            else
+
+            if (!skip_resize)
             {
-                filter = VTFMipmapFilter::MIPMAP_FILTER_MITCHELL;
+                vlByte* resized = (vlByte*)malloc(4 * height * width);
+                VTFMipmapFilter filter;
+                if (face_width * face_height < width * height)
+                {
+                    filter = VTFMipmapFilter::MIPMAP_FILTER_BLACKMAN;
+                }
+                else
+                {
+                    filter = VTFMipmapFilter::MIPMAP_FILTER_MITCHELL;
+                }
+                success = cubemap.Resize(main_buffer[i], resized, face_width, face_height, width, height, filter, VTFSharpenFilter::SHARPEN_FILTER_SHARPENSOFT);
+                if (!success)
+                {
+                    printf("resize failed: %s\n", vlGetLastError());
+                    PressKeyToContinue();
+                    std::terminate();
+                }
+                free(main_buffer[i]);
+                main_buffer[i] = resized;
             }
-            success = cubemap.Resize(main_buffer[i], resized, face_width, face_height, width, height, filter, VTFSharpenFilter::SHARPEN_FILTER_SHARPENSOFT);
-            if (!success)
-            {
-                printf("resize failed: %s\n", vlGetLastError());
-                PressKeyToContinue();
-                std::terminate();
-            }
-            free(main_buffer[i]);
-            main_buffer[i] = resized;
         }
 
 
