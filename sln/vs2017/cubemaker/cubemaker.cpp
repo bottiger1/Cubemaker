@@ -17,14 +17,17 @@ All 6 of these VTF files must be in the same directory. Sometimes the dn VTF is 
 file with the same name, find the VTF it points to, copy and paste it into the same folder as the VMT 
 and give it the same name except with the extension VTF.
 
-3 files will be created: theskybox_cubemap.vtf, theskybox_cubemap.vmt, theskybox_cubemap.hdr.vmt
+4 files will be created: theskybox_cubemap.vtf, theskybox_cubemap.vtf.hq, theskybox_cubemap.vmt, theskybox_cubemap.hdr.vmt
 
-Edit theskybox_cubemap.vmt and change the path if needed. Then copy the 3 files to that path.
+If you want a smaller file size, delete theskybox_cubemap.vtf.hq. If you want higher quality skybox, 
+delete theskybox_cubemap.vtf and rename the .hq version to theskybox_cubemap.vtf
+
+Edit theskybox_cubemap.vmt and change the path if needed. Then copy the files to that path.
 
 You can now apply theskybox_cubemap to the faces around the sky_camera.
 
 You can optionally delete the hdr.vmt if you are compiling LDR only. If you compile in HDR without this
-file, then the material will be replaced with a blinding white one.
+file, the skybox will be pure white for people with HDR enabled.
 )";
 
 const char* g_completed = R"(DONE
@@ -228,6 +231,10 @@ int main(int argc, char* argv[])
     auto cubemap = VTFLib::CVTFFile();
 
     vlByte* main_buffer[6];
+    vlUInt lastPixel[6]; // get the last pixel for face sides for stretching method
+    vlUInt lastPixelAverage;
+
+    // convert to RGBA8888 internally because sphere face making process in VTFLib and Valve both do that already
     for (int i = 0; i < 6; i++)
     {
         auto face_width = faces[i]->GetWidth();
@@ -240,7 +247,33 @@ int main(int argc, char* argv[])
             PressKeyToContinue();
             std::terminate();
         }
+        vlUInt* pixelPtr = (vlUInt*)main_buffer[i];
+        lastPixel[i] = pixelPtr[face_height * face_width - 1];
+    }
+    
+    // calculate average last pixel color for stretch method
+    {
+        float r = 0.0, g = 0.0, b = 0.0, a = 0.0;
+        for (int i = 0; i <= 3; i++)
+        {
+            auto channels = (vlByte*)&lastPixel[i];
+            r += channels[0];
+            g += channels[1];
+            b += channels[2];
+            a += channels[3];
+        }
 
+        auto lastPixelChannels = (vlByte*)&lastPixelAverage;
+        lastPixelChannels[0] = (vlByte)round(r / 4.0);
+        lastPixelChannels[1] = (vlByte)round(g / 4.0);
+        lastPixelChannels[2] = (vlByte)round(b / 4.0);
+        lastPixelChannels[3] = (vlByte)round(a / 4.0);
+    }
+
+    for(int i = 0; i < 6; i++)
+    {
+        auto face_width = faces[i]->GetWidth();
+        auto face_height = faces[i]->GetHeight();
         if (face_width != width || face_height != height)
         {
             printf("%s%s.vtf has a different dimension %i x %i. attempting to resize.\n", base_nopath, g_faceorder[i], face_width, face_height);
@@ -254,10 +287,9 @@ int main(int argc, char* argv[])
                 vlByte* resized = (vlByte*)malloc(4 * face_width * face_width);
                 memcpy(resized, main_buffer[i], 4 * face_width * face_height);
                 vlUInt* resizedPixelPtr = (vlUInt*)resized;
-                vlUInt32 lastPixel = resizedPixelPtr[face_width * face_height - 1];
                 for (vlUInt i = face_width * face_height; i < face_width * face_width; i++)
                 {
-                    resizedPixelPtr[i] = lastPixel;
+                    resizedPixelPtr[i] = lastPixelAverage;
                 }
                 free(main_buffer[i]);
                 main_buffer[i] = resized;
@@ -278,7 +310,7 @@ int main(int argc, char* argv[])
                 {
                     filter = VTFMipmapFilter::MIPMAP_FILTER_MITCHELL;
                 }
-                success = cubemap.Resize(main_buffer[i], resized, face_width, face_height, width, height, filter, VTFSharpenFilter::SHARPEN_FILTER_SHARPENSOFT);
+                bool success = cubemap.Resize(main_buffer[i], resized, face_width, face_height, width, height, filter, VTFSharpenFilter::SHARPEN_FILTER_SHARPENSOFT);
                 if (!success)
                 {
                     printf("resize failed: %s\n", vlGetLastError());
@@ -371,6 +403,17 @@ int main(int argc, char* argv[])
         std::terminate();
     }
     ldr.Destroy();
+
+    auto ldr_hq = VTFLib::CVTFFile(cubemap, VTFImageFormat::IMAGE_FORMAT_RGB888);
+    snprintf(output_name, sizeof(output_name), "%s_cubemap.vtf.hq", base);
+    success = ldr_hq.Save(output_name);
+    if (!success)
+    {
+        printf("LDR high quality Save Error %s\n", vlGetLastError());
+        PressKeyToContinue();
+        std::terminate();
+    }
+    ldr_hq.Destroy();
 
     auto hdr = VTFLib::CVTFFile(cubemap, VTFImageFormat::IMAGE_FORMAT_RGBA16161616F);
     ConvertImageToFloat(&hdr);

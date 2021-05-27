@@ -27,11 +27,15 @@ Sometimes the dn VTF is missing. Open the VMT file with the same name (example t
 VTF file used (example $basetexture cs_italy/black). Find the actual VTF file, and copy and paste it into the same place
 with the rest of the VTFs and give it the proper name (example theskybox_dn.vtf).
 
-Two files will be produced
+These files will be made
 
 * theskybox_cubemap.vtf
+* theskybox_cubemap.vtf.hq
 * theskybox_cubemap.vmt
 * theskybox_cubemap.hdr.vmt
+
+If you want less disk usage, delete **theskybox_cubemap.vtf.hq**. If you want higher quality, delete **theskybox_cubemap.vtf**
+and rename **theskybox_cubemap.vtf.hq** to **theskybox_cubemap.vtf**
 
 Move these files to **materials/cubemap_skyboxes** or edit **theskybox_cubemap.vmt** to use a different path.
 
