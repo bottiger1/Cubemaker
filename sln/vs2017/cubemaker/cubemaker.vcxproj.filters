@@ -18,12 +18,18 @@
     <ClCompile Include="cubemaker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="half.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="half.h">
+    <ClInclude Include="include\fp16.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\fp16\fp16.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\fp16\bitcasts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\fp16\psimd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

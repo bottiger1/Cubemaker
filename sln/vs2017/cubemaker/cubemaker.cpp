@@ -2,7 +2,7 @@
 
 #include <VTFFile.h>
 #include <VTFLib.h>
-#include "half.h"
+#include <fp16.h>
 
 const char* g_banner = "Skybox to Cubemap Maker by Bottiger skial.com\n\n";
 
@@ -49,12 +49,21 @@ struct CVTFFileUnprivate
 };
 
 #pragma pack(1)
+
 struct RGBA16F
 {
     uint16_t r;
     uint16_t g;
     uint16_t b;
     uint16_t a;
+};
+
+struct RGBA32F
+{
+    float r;
+    float g;
+    float b;
+    float a;
 };
 
 struct BGRA8
@@ -73,9 +82,9 @@ struct RGBA8
     unsigned char a;
 };
 
-// needed for HDR format
+// needed to convert to HDR
 // TODO: make a table for 0 to 255?
-float ConvertGamma(float u)
+float SRGBToLinear(float u)
 {
     if (u <= 0.04045)
     {
@@ -85,6 +94,35 @@ float ConvertGamma(float u)
     {
         return (float)pow((u + 0.055) / 1.055, 2.4);
     }
+}
+
+vlByte LinearToSRGB(float u)
+{
+    if (u <= 0.0031308)
+    {
+        auto scale = u * 12.92 * 255.0;
+        if (scale > 255.0)
+        {
+            scale = 255.0;
+        }
+        return (vlByte)round(scale);
+    }
+    else
+    {
+        auto scale = (pow(u, 1.0 / 2.4) * 1.055 - 0.055) * 255.0;
+        if (scale > 255.0)
+        {
+            scale = 255.0;
+        }
+        return (vlByte)round(scale);
+    }
+}
+
+vlByte ConvertFloat16ToInt(uint16_t u)
+{
+    float f = fp16_ieee_to_fp32_value(u);
+    vlByte output = LinearToSRGB(f);
+    return output;
 }
 
 // VTFLib does not properly convert these modes. we fully convert them here instead of the DLL so we don't have to deal with
@@ -104,14 +142,14 @@ void ConvertImageToFloat(VTFLib::CVTFFile* vtf, VTFLib::CVTFFile* vtfOld)
         float fB = ((float)ptrOld[i].b) / 255.0f;
         float fA = ((float)ptrOld[i].a) / 255.0f;
 
-        fR = ConvertGamma(fR);
-        fG = ConvertGamma(fG);
-        fB = ConvertGamma(fB);
+        fR = SRGBToLinear(fR);
+        fG = SRGBToLinear(fG);
+        fB = SRGBToLinear(fB);
 
-        ptr[i].r = half::FLOAT16::ToFloat16Fast(fR).m_uiFormat;
-        ptr[i].g = half::FLOAT16::ToFloat16Fast(fG).m_uiFormat;
-        ptr[i].b = half::FLOAT16::ToFloat16Fast(fB).m_uiFormat;
-        ptr[i].a = half::FLOAT16::ToFloat16Fast(fA).m_uiFormat;
+        ptr[i].r = fp16_ieee_from_fp32_value(fR);
+        ptr[i].g = fp16_ieee_from_fp32_value(fG);
+        ptr[i].b = fp16_ieee_from_fp32_value(fB);
+        ptr[i].a = fp16_ieee_from_fp32_value(fA);
     }
 }
 
@@ -257,8 +295,8 @@ int main(int argc, char* argv[])
     auto cubemap = VTFLib::CVTFFile();
 
     vlByte* main_buffer[6];
-    vlUInt lastPixel[6]; // get the last pixel for face sides for stretching method
-    vlUInt lastPixelAverage;
+    RGBA8 lastPixel[6]; // get the last pixel for face sides for stretching method
+    RGBA8 lastPixelAverage{};
 
     // convert to RGBA8888 internally because sphere face making process in VTFLib and Valve both do that already
     for (int i = 0; i < 6; i++)
@@ -266,14 +304,45 @@ int main(int argc, char* argv[])
         auto face_width = faces[i]->GetWidth();
         auto face_height = faces[i]->GetHeight();
         main_buffer[i] = (vlByte*)malloc(4 * face_height * face_width);
-        auto success = cubemap.ConvertToRGBA8888(faces[i]->GetData(0, 0, 0, 0), main_buffer[i], face_width, face_height, faces[i]->GetFormat());
-        if (!success)
+        auto oldFormat = faces[i]->GetFormat();
+
+        // gamma correction for HDR formats
+        if (oldFormat == VTFImageFormat::IMAGE_FORMAT_RGBA16161616F)
         {
-            printf("ConvertToRGBA8888 %s %s\n", g_faceorder[i], vlGetLastError());
-            PressKeyToContinue();
-            std::terminate();
+            auto old_ptr = (RGBA16F*)faces[i]->GetData(0, 0, 0, 0);
+            auto new_ptr = (RGBA8*)main_buffer[i];
+            for (vlUInt j = 0; j < face_width * face_height; j++)
+            {
+                new_ptr[j].r = ConvertFloat16ToInt(old_ptr[j].r);
+                new_ptr[j].g = ConvertFloat16ToInt(old_ptr[j].g);
+                new_ptr[j].b = ConvertFloat16ToInt(old_ptr[j].b);
+                new_ptr[j].a = (unsigned char)(fp16_ieee_to_fp32_value(old_ptr[j].a) * 255.0f);
+            }
         }
-        vlUInt* pixelPtr = (vlUInt*)main_buffer[i];
+        else if (oldFormat == VTFImageFormat::IMAGE_FORMAT_RGBA32323232F)
+        {
+            auto old_ptr = (RGBA32F*)faces[i]->GetData(0, 0, 0, 0);
+            auto new_ptr = (RGBA8*)main_buffer[i];
+            for (vlUInt j = 0; j < face_width * face_height; j++)
+            {
+                new_ptr[j].r = LinearToSRGB(old_ptr[j].r);
+                new_ptr[j].g = LinearToSRGB(old_ptr[j].g);
+                new_ptr[j].b = LinearToSRGB(old_ptr[j].b);
+                new_ptr[j].a = (unsigned char)(old_ptr[j].a * 255.0f);
+            }
+        }
+        else
+        {
+            auto success = cubemap.ConvertToRGBA8888(faces[i]->GetData(0, 0, 0, 0), main_buffer[i], face_width, face_height, oldFormat);
+            if (!success)
+            {
+                printf("ConvertToRGBA8888 %s %s\n", g_faceorder[i], vlGetLastError());
+                PressKeyToContinue();
+                std::terminate();
+            }
+        }
+
+        RGBA8* pixelPtr = (RGBA8*)main_buffer[i];
         lastPixel[i] = pixelPtr[face_height * face_width - 1];
     }
     
@@ -282,18 +351,16 @@ int main(int argc, char* argv[])
         float r = 0.0, g = 0.0, b = 0.0, a = 0.0;
         for (int i = 0; i <= 3; i++)
         {
-            auto channels = (vlByte*)&lastPixel[i];
-            r += channels[0];
-            g += channels[1];
-            b += channels[2];
-            a += channels[3];
+            r += lastPixel[i].r;
+            g += lastPixel[i].g;
+            b += lastPixel[i].b;
+            a += lastPixel[i].a;
         }
 
-        auto lastPixelChannels = (vlByte*)&lastPixelAverage;
-        lastPixelChannels[0] = (vlByte)round(r / 4.0);
-        lastPixelChannels[1] = (vlByte)round(g / 4.0);
-        lastPixelChannels[2] = (vlByte)round(b / 4.0);
-        lastPixelChannels[3] = (vlByte)round(a / 4.0);
+        lastPixelAverage.r = (vlByte)round(r / 4.0);
+        lastPixelAverage.g = (vlByte)round(g / 4.0);
+        lastPixelAverage.b = (vlByte)round(b / 4.0);
+        lastPixelAverage.a = (vlByte)round(a / 4.0);
     }
 
     for(int i = 0; i < 6; i++)
@@ -312,7 +379,7 @@ int main(int argc, char* argv[])
                 printf("padding rectangular side face\n");
                 vlByte* resized = (vlByte*)malloc(4 * face_width * face_width);
                 memcpy(resized, main_buffer[i], 4 * face_width * face_height);
-                vlUInt* resizedPixelPtr = (vlUInt*)resized;
+                RGBA8* resizedPixelPtr = (RGBA8*)resized;
                 for (vlUInt i = face_width * face_height; i < face_width * face_width; i++)
                 {
                     resizedPixelPtr[i] = lastPixelAverage;
