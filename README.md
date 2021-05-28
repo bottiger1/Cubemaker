@@ -63,6 +63,6 @@ The program was written by Bottiger @ skial.com. Thanks to Berke for discovering
 
 ## Licenses
 
-The cubemaker program is licensed as BSD. VTFLib is LGPL. VTFCmd and VTFEdit are GPL. half.h/half.cpp is licensed as BSD by another author.
+The cubemaker program is licensed as BSD. VTFLib is LGPL. VTFCmd and VTFEdit are GPL. fp16.h is licensed as BSD by Marat Dukhan.
 
 The cubemaker program does not rely on VTFCmd or VTFEdit, they are just included in the repository as they are bundled with VTFLib.
