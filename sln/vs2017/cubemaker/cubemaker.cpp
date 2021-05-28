@@ -49,7 +49,7 @@ struct CVTFFileUnprivate
 };
 
 #pragma pack(1)
-struct RGBA16
+struct RGBA16F
 {
     uint16_t r;
     uint16_t g;
@@ -65,22 +65,48 @@ struct BGRA8
     unsigned char a;
 };
 
+struct RGBA8
+{
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+    unsigned char a;
+};
+
+// needed for HDR format
+// TODO: make a table for 0 to 255?
+float ConvertGamma(float u)
+{
+    if (u <= 0.04045)
+    {
+        return (float)(u / 12.92);
+    }
+    else
+    {
+        return (float)pow((u + 0.055) / 1.055, 2.4);
+    }
+}
+
 // VTFLib does not properly convert these modes. we fully convert them here instead of the DLL so we don't have to deal with
 // getting nvidia's library to compile 
 
-void ConvertImageToFloat(VTFLib::CVTFFile* vtf)
+void ConvertImageToFloat(VTFLib::CVTFFile* vtf, VTFLib::CVTFFile* vtfOld)
 {
-    auto output_open = (CVTFFileUnprivate*)vtf;
-    auto ptr = (RGBA16*)output_open->lpImageData;
+    auto ptr = (RGBA16F*)((CVTFFileUnprivate*)vtf)->lpImageData;
+    auto ptrOld = (RGBA8*)((CVTFFileUnprivate*)vtfOld)->lpImageData;
+    
     vlUInt pixels = vtf->GetHeight() * vtf->GetWidth() * vtf->GetFaceCount() * vtf->GetFrameCount();
 
     for (vlUInt i = 0; i < pixels; i++)
     {
-        const float factor = (float)(1.0 / 65535.0);
-        float fR = ptr[i].r * factor;
-        float fG = ptr[i].g * factor;
-        float fB = ptr[i].b * factor;
-        float fA = ptr[i].a * factor;
+        float fR = ((float)ptrOld[i].r) / 255.0f;
+        float fG = ((float)ptrOld[i].g) / 255.0f;
+        float fB = ((float)ptrOld[i].b) / 255.0f;
+        float fA = ((float)ptrOld[i].a) / 255.0f;
+
+        fR = ConvertGamma(fR);
+        fG = ConvertGamma(fG);
+        fB = ConvertGamma(fB);
 
         ptr[i].r = half::FLOAT16::ToFloat16Fast(fR).m_uiFormat;
         ptr[i].g = half::FLOAT16::ToFloat16Fast(fG).m_uiFormat;
@@ -416,7 +442,7 @@ int main(int argc, char* argv[])
     ldr_hq.Destroy();
 
     auto hdr = VTFLib::CVTFFile(cubemap, VTFImageFormat::IMAGE_FORMAT_RGBA16161616F);
-    ConvertImageToFloat(&hdr);
+    ConvertImageToFloat(&hdr, &cubemap);
     snprintf(output_name, sizeof(output_name), "%s_cubemap.hdr.vtf", base);
     success = hdr.Save(output_name);
     if (!success)
