@@ -59,7 +59,10 @@ https://developer.nvidia.com/legacy-texture-tools
 
 ## Credits
 
-The program was written by Bottiger @ skial.com. Thanks to Berke for discovering the method. Thanks to VTFLib for creating the library.
+The program was written by Bottiger @ skial.com. Thanks to Berke for teaching me the basic method of making cubemap skyboxes
+with VTFEdit.
+
+Thanks to VTFLib and fp16 libraries.
 
 ## Licenses
 
