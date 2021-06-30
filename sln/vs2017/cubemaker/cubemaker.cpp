@@ -84,6 +84,7 @@ struct RGBA8
 
 // needed to convert to HDR
 // TODO: make a table for 0 to 255?
+// DIVIDE by 255
 float SRGBToLinear(float u)
 {
     if (u <= 0.04045)
@@ -259,6 +260,13 @@ int main(int argc, char* argv[])
         base_nopath[len - 2] = 0;
     }
 
+    /*
+    char base[MAX_PATH];
+    char base_nopath[MAX_PATH];
+    strcpy_s(base, R"(C:\Users\d\Documents\GitHub\Cubemaker\sln\vs2017\Debug\sky_skylab_01)");
+    strcpy_s(base_nopath, R"(sky_skylab_01)");
+    */
+
     VTFLib::CVTFFile* faces[6]{};
 
     vlUInt width = 0;
@@ -292,6 +300,12 @@ int main(int argc, char* argv[])
     }
 
     printf("assuming dimensions of %i x %i based on largest square VTF \n", width, height);
+    if (width > 1024)
+    {
+        printf("downsizing to 1024 to avoid vtflib crash\n");
+        width = 1024;
+        height = 1024;
+    }
     auto cubemap = VTFLib::CVTFFile();
 
     vlByte* main_buffer[6];
@@ -351,15 +365,15 @@ int main(int argc, char* argv[])
         float r = 0.0, g = 0.0, b = 0.0, a = 0.0;
         for (int i = 0; i <= 3; i++)
         {
-            r += lastPixel[i].r;
-            g += lastPixel[i].g;
-            b += lastPixel[i].b;
+            r += SRGBToLinear(lastPixel[i].r / 255.0);
+            g += SRGBToLinear(lastPixel[i].g / 255.0);
+            b += SRGBToLinear(lastPixel[i].b / 255.0);
             a += lastPixel[i].a;
         }
 
-        lastPixelAverage.r = (vlByte)round(r / 4.0);
-        lastPixelAverage.g = (vlByte)round(g / 4.0);
-        lastPixelAverage.b = (vlByte)round(b / 4.0);
+        lastPixelAverage.r = LinearToSRGB(r / 4.0);
+        lastPixelAverage.g = LinearToSRGB(g / 4.0);
+        lastPixelAverage.b = LinearToSRGB(b / 4.0);
         lastPixelAverage.a = (vlByte)round(a / 4.0);
     }
 
@@ -367,6 +381,7 @@ int main(int argc, char* argv[])
     {
         auto face_width = faces[i]->GetWidth();
         auto face_height = faces[i]->GetHeight();
+
         if (face_width != width || face_height != height)
         {
             printf("%s%s.vtf has a different dimension %i x %i. attempting to resize.\n", base_nopath, g_faceorder[i], face_width, face_height);
@@ -536,11 +551,11 @@ int main(int argc, char* argv[])
 
     snprintf(output_name, sizeof(output_name), "%s_cubemap.vmt", base);
     FILE* f;
-    errnum = fopen_s(&f, output_name, "w");
-    if (errnum || f == NULL)
+    auto errnum2 = fopen_s(&f, output_name, "w");
+    if (errnum2 || f == NULL)
     {
         char err[64];
-        strerror_s(err, errnum);
+        strerror_s(err, errnum2);
         printf("Error opening %s to write: %s\n", output_name, err);
         PressKeyToContinue();
         std::terminate();
