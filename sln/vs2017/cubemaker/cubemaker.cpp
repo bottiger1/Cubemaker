@@ -39,6 +39,7 @@ const char* g_vmt_template = \
 R"("WindowImposter"
 {
     "$envmap" "cubemap_skyboxes/%s_cubemap"
+    "$nofog"  "1"
 })";
 
 struct CVTFFileUnprivate
