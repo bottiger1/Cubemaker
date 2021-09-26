@@ -64,6 +64,8 @@ with VTFEdit.
 
 Thanks to VTFLib and fp16 libraries.
 
+Icon by alexrox360
+
 ## Licenses
 
 The cubemaker program is licensed as BSD. VTFLib is LGPL. VTFCmd and VTFEdit are GPL. fp16.h is licensed as BSD by Marat Dukhan.

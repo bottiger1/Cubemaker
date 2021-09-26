@@ -154,6 +154,13 @@
     <ClInclude Include="include\fp16\bitcasts.h" />
     <ClInclude Include="include\fp16\fp16.h" />
     <ClInclude Include="include\fp16\psimd.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="cubemaker.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
