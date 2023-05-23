@@ -6,6 +6,13 @@ If you apply skybox textures to a brush without using this, you will see the fai
 
 This is used to allow the changing of skyboxes whenever you want.
 
+## UPDATE
+
+TF2 (which this was originally made for) now has the skybox_swapper entity https://developer.valvesoftware.com/wiki/Skybox_swapper. If you
+are on TF2 we recommend that you use that instead for smaller map sizes.
+
+However this program is still needed for older games like CS Source.
+
 ## How to use
 
 Download the release and put the exe and dll file in a folder somewhere.
