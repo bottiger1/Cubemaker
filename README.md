@@ -9,9 +9,10 @@ This is used to allow the changing of skyboxes whenever you want.
 ## UPDATE
 
 TF2 (which this was originally made for) now has the skybox_swapper entity https://developer.valvesoftware.com/wiki/Skybox_swapper. If you
-are on TF2 we recommend that you use that instead for smaller map sizes.
+are on TF2 we recommend that you use that instead for smaller map sizes. However this program is still needed for older games like CS Source.
 
-However this program is still needed for older games like CS Source.
+Actually, this program will still be useful in games with skybox_swapper entity if you want to have multiple skyboxes on the same level
+in different areas, probably a rare occurance.
 
 ## How to use
 
